@@ -1,0 +1,1 @@
+##Filters file index based on json criteria
