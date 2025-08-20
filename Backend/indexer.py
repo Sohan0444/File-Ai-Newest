@@ -1,7 +1,7 @@
 from pathlib import Path
 from datetime import datetime
 from unicodedata import name
-
+import json
 ##Indexes files and metadata (data about data) to preform actions
 
 
@@ -69,7 +69,7 @@ def create_skeleton(root_paths: list) -> list[FileMetaData]:
             if path.is_file():
                 file_metadata = FileMetaData(
                     name=path.name,
-                    path=str(path.parent),
+                    path=str(path),  # Fixed: Use full path instead of just parent
                     file_type=path.suffix.lstrip("."),
                     size=path.stat().st_size,
                     created_at=datetime.fromtimestamp(path.stat().st_ctime).isoformat(),
@@ -144,6 +144,30 @@ def group_by_folder(index: list[FileMetaData]) -> dict[str, list[FileMetaData]]:
     return folder_dict
 
 
+# Save the index to a JSON file
+def save_index(index: list[FileMetaData], file_path="file_index.json") -> None:
+    """
+    Saves a list of FileMetaData objects into a JSON file.
+    Converts each FileMetaData into a dictionary before saving.
+    """
+    data = [vars(file) for file in index]  # Convert objects → dicts
+    with open(file_path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=4)
+
+
+# Load the index from a JSON file
+def load_index(file_path="file_index.json") -> list[FileMetaData]:
+    """
+    Loads a JSON file and converts dictionaries back into FileMetaData objects.
+    """
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return [FileMetaData(**file) for file in data]  # dicts → objects
+    except FileNotFoundError:
+        print(f"No index file found at {file_path}. Run create_skeleton() first.")
+        return []
+
 
 
 
@@ -151,9 +175,19 @@ def group_by_folder(index: list[FileMetaData]) -> dict[str, list[FileMetaData]]:
 
 
 if __name__ == "__main__":
-    # Example: test with a real folder (change to match your actual path)
-    index = create_skeleton(["/Users/sohanshetty/Desktop"])
+    index = create_skeleton([r"C:\Users\poiso\Desktop"])
     print(f"Total files found: {len(index)}\n")
 
-    for i, file in enumerate(index):
+    # Save it to a file
+    save_index(index)
+
+    # Load it later from the file
+    loaded_index = load_index()
+    print(f"Loaded {len(loaded_index)} files from cache")
+    
+    # Show first few files as examples
+    for i, file in enumerate(index[:5]):  # Show first 5 files
         print(f"{i + 1}. {file.name} ({file.file_type}) — {file.path}")
+    
+    if len(index) > 5:
+        print(f"... and {len(index) - 5} more files")
