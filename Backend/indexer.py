@@ -93,34 +93,55 @@ def create_skeleton(root_paths: list) -> list[FileMetaData]:
 # Optionally removes deleted ones
 # 🔁 This lets the app keep your index up to date without starting from scratch.
 def refresh_index(existing_index: list[FileMetaData], root_paths: list) -> list[FileMetaData]:
-    pass
+    new_index = create_skeleton(root_paths)
+
+    # Build a lookup dict from existing_index for fast access
+    existing_lookup = {file.path: file for file in existing_index}
+
+    for file in new_index:
+        if file.path not in existing_lookup:
+            existing_index.append(file)  # New file
+        else:
+            existing_file = existing_lookup[file.path]
+            # Update fields that may have changed
+            existing_file.modified = file.modified
+            existing_file.accessed = file.accessed
+            existing_file.size = file.size
+            existing_file.tags = file.tags
+            existing_file.preview_text = file.preview_text
+            existing_file.hash = file.hash
+
+    return existing_index
+
+
 
 # Returns just a list of file names or paths from the index
 # Helpful for quick lookups or debugging
-def get_all_files(index: list[FileMetaData]) -> list[str]:
-    name_path_list = [[],[]]
+def get_all_files(index: list[FileMetaData]) -> list[tuple[str, str]]:
+    name_path_list = set()
     for files in index:
-        name_path_list[0].append(files.name)
-        name_path_list[1].append(files.path)
+        name_path_list.add((files.name, files.path))
     return name_path_list
 
 
 # Same idea — useful for folder-level organization/stats
 def get_all_folders(index: list[FileMetaData]) -> list[str]:
-    pass
+    folder_list = []
+    for files in index:
+        folder_list.append(files.folder)
+    return folder_list
+
 
 # Returns a dictionary where keys are folder names and values are lists of files
 # Super helpful when building UI later ("show me all files under X")
 def group_by_folder(index: list[FileMetaData]) -> dict[str, list[FileMetaData]]:
-    pass
-
-
-
-
-
-
-
-
+    folder_dict = {}
+    for files in index:
+        if files.folder not in folder_dict:
+            folder_dict.update({files.folder: [files]})
+        else:
+            folder_dict[files.folder].append(files)
+    return folder_dict
 
 
 
