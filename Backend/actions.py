@@ -54,8 +54,84 @@ def get_file_info(file: FileMetaData) -> dict:
 def delete_file(path: str) -> bool:
     """
     Deletes the file at given path.
-    Returns True if successful, False otherwise.
+    
+    This function safely deletes a file from the filesystem with proper error handling.
+    It performs several safety checks before attempting deletion to prevent data loss.
+    
+    Args:
+        path (str): The absolute or relative path to the file to delete
+        
+    Returns:
+        bool: True if deletion was successful, False if it failed
+        
+    Safety Features:
+        - Checks if file exists before attempting deletion
+        - Validates that the path points to a file (not a directory)
+        - Handles permission errors gracefully
+        - Provides detailed error logging for debugging
+        
+    Example:
+        >>> delete_file("/path/to/file.txt")
+        True
+        >>> delete_file("/nonexistent/file.txt")
+        False
     """
+    try:
+        # Step 1: Validate the input path
+        if not path or not isinstance(path, str):
+            print(f"Error: Invalid path provided: {path}")
+            return False
+            
+        # Step 2: Convert relative path to absolute path for consistency
+        # This ensures we're working with a full path regardless of input
+        absolute_path = os.path.abspath(path)
+        
+        # Step 3: Check if the file actually exists
+        # This prevents errors when trying to delete non-existent files
+        if not os.path.exists(absolute_path):
+            print(f"Error: File does not exist: {absolute_path}")
+            return False
+            
+        # Step 4: Verify it's a file, not a directory
+        # This prevents accidental deletion of entire folders
+        if not os.path.isfile(absolute_path):
+            print(f"Error: Path is not a file (might be a directory): {absolute_path}")
+            return False
+            
+        # Step 5: Check if we have permission to delete the file
+        # This catches permission errors before attempting deletion
+        if not os.access(absolute_path, os.W_OK):
+            print(f"Error: No write permission for file: {absolute_path}")
+            return False
+            
+        # Step 6: Attempt to delete the file
+        # os.remove() is the standard way to delete files in Python
+        os.remove(absolute_path)
+        
+        # Step 7: Verify deletion was successful
+        # Double-check that the file is actually gone
+        if os.path.exists(absolute_path):
+            print(f"Error: File still exists after deletion attempt: {absolute_path}")
+            return False
+            
+        # Step 8: Success! Log the successful deletion
+        print(f"Successfully deleted file: {absolute_path}")
+        return True
+        
+    except PermissionError as e:
+        # Handle permission-related errors (file in use, read-only, etc.)
+        print(f"Permission error deleting file {path}: {e}")
+        return False
+        
+    except OSError as e:
+        # Handle other OS-related errors (disk full, network issues, etc.)
+        print(f"OS error deleting file {path}: {e}")
+        return False
+        
+    except Exception as e:
+        # Catch any other unexpected errors
+        print(f"Unexpected error deleting file {path}: {e}")
+        return False
     
 
 
