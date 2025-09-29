@@ -140,7 +140,17 @@ def open_file(path: str) -> bool:
     Opens file with system default program.
     Returns True if successful, False otherwise.
     """
-    pass
+    try:
+        if sys.platform.startswith("win"):
+            os.startfile(path)  # Windows
+        elif sys.platform.startswith("darwin"):
+            subprocess.run(["open", path])  # macOS
+        else:
+            subprocess.run(["xdg-open", path])  # Linux
+        return True
+    except Exception as e:
+        print(f"Error opening file {path}: {e}")
+        return False
 
 
 def move_file(path: str, destination: str) -> bool:
@@ -148,7 +158,13 @@ def move_file(path: str, destination: str) -> bool:
     Moves file to a new location.
     Returns True if successful, False otherwise.
     """
-    pass
+    try:
+        shutil.move(path, destination)
+        return True
+    except Exception as e:
+        print(f"Error moving file {path} -> {destination}: {e}")
+        return False
+    
 
 
 def copy_file(path: str, destination: str) -> bool:
@@ -156,14 +172,25 @@ def copy_file(path: str, destination: str) -> bool:
     Copies file to a new location.
     Returns True if successful, False otherwise.
     """
-    pass
+    try:
+        shutil.copy2(path, destination)
+        return True
+    except Exception as e:
+        print(f"Error copying file {path} -> {destination}: {e}")
+        return False
+    
 
 
 def preview_file(path: str, chars: int = 500) -> str:
     """
     Returns first N characters of file content (if text-based).
     """
-    pass
+    try:
+        with open(path, "r", encoding="utf-8", errors="ignore") as f:
+            content = f.read(chars) 
+        return content
+    except Exception as e:
+        return f"Could not preview file {path}: {e}"
 
 
 def summarize_file(path: str) -> str:
