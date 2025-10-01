@@ -17,7 +17,7 @@ from indexer import FileMetaData
 
 
 def find_files(
-    files: List[FileMetaData],
+    files: Optional[List[FileMetaData]] = None,
     name: Optional[str] = None,
     file_types: Optional[List[str]] = None,
     min_size: Optional[int] = None,
@@ -31,8 +31,42 @@ def find_files(
     """
     Wrapper around search_engine.search_files.
     Takes filter parameters and returns matching files.
+    If no files are provided, loads from the default index.
     """
-    pass
+    from datetime import datetime
+    
+    # If no files provided, load from index
+    if files is None:
+        from indexer import load_index
+        files = load_index()
+    
+    # Convert string dates to datetime objects if provided
+    before_dt = None
+    after_dt = None
+    if before:
+        try:
+            before_dt = datetime.fromisoformat(before)
+        except ValueError:
+            print(f"Warning: Invalid date format for 'before': {before}")
+    if after:
+        try:
+            after_dt = datetime.fromisoformat(after)
+        except ValueError:
+            print(f"Warning: Invalid date format for 'after': {after}")
+    
+    # Call the search_engine function
+    return search_engine.search_files(
+        files=files,
+        name=name,
+        file_types=file_types,
+        min_size=min_size,
+        max_size=max_size,
+        before=before_dt,
+        after=after_dt,
+        sort_key=sort_key,
+        reverse=reverse,
+        limit=limit
+    )
 
 
 def get_file_info(file: FileMetaData) -> dict:

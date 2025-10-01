@@ -6,18 +6,24 @@ from pathlib import Path
 backend_dir = Path(__file__).parent.parent
 sys.path.insert(0, str(backend_dir))
 
+import llm_parser
+
 from config import OPENAI_API_KEY
 from openai import OpenAI
 
 # Initialize OpenAI client
 client = OpenAI(api_key=OPENAI_API_KEY)
 
-response = client.chat.completions.create(
-    model="gpt-4o-mini",  # you can swap to "gpt-4.1" or others
-    messages=[
-        {"role": "system", "content": "You are a helpful assistant."},
-        {"role": "user", "content": "What’s the capital of France?"}
-    ]
-)
 
-print(response.choices[0].message.content)
+
+
+def determine_tools_from_query(query: str):
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": "You are an ai file manager that can perform actions on files."},
+            {"role": "user", "content": f"{llm_parser.send_tools_openai(query)}"}
+        ]
+    )
+    print(response.choices[0].message.content)
+
